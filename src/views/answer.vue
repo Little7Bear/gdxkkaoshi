@@ -30,7 +30,7 @@
               :key="index"
               class="card-item"
               :class="{selected:item.selected,active:active === singleData.length+index+1}"
-              @click="onChoice(singleData.length+index+1,'多选')"
+              @click="onChoice(singleData.length+index+1)"
             >{{singleData.length+index+1}}</li>
           </ul>
         </el-card>
@@ -46,19 +46,19 @@
       <section class="content">
         <div class="content-header">
           <span>请选择正确的选项</span>
-          <span>倒计时：{{minute}}分钟</span>
+          <span>倒计时：{{time}}</span>
         </div>
 
         <div class="content-body">
           <div>
-            <span style="margin-right:5px;">{{topic.index}}.</span>
-            <span>{{topic.text}}</span>
+            <span style="margin-right:5px;">{{listData[active-1].index}}.</span>
+            <span>{{listData[active-1].text}}</span>
           </div>
 
           <div style="margin-top:20px;margin-left:20px;" v-show="type==='单选'">
-            <el-radio-group v-model="topic.answer">
+            <el-radio-group v-model="listData[active-1].answer" @change="changeRadio">
               <el-radio
-                v-for="(item, index) in topic.answers"
+                v-for="(item, index) in listData[active-1].answers"
                 :key="index"
                 :label="item.label"
               >{{item.text}}</el-radio>
@@ -66,9 +66,9 @@
           </div>
 
           <div style="margin-top:20px;margin-left:20px;" v-show="type==='多选'">
-            <el-checkbox-group v-model="topic.answerList">
+            <el-checkbox-group v-model="listData[active-1].answerList" @change="changeCheckbox">
               <el-checkbox
-                v-for="(item, index) in topic.answers"
+                v-for="(item, index) in listData[active-1].answers"
                 :key="index"
                 :label="item.label"
               >{{item.text}}</el-checkbox>
@@ -100,71 +100,125 @@
         <el-button type="primary" @click="onComplete">立即交卷</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog title="提示" :visible.sync="showDialogEnd" width="30%">
+      <i class="el-icon-warning"></i>
+      <span>考试结束，试卷已提交！</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showDialogEnd = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import moment from 'moment'
+
 export default {
   data() {
     return {
       id: 0,
       dialogVisible: false,
-      minute: 33,
+      showDialogEnd: false,
+      time: '',
       type: '单选',
 
-      topic: {
-        index: 1,
-        text:
-          '以太网采用的CSMA/CD协议，当冲突发生时要通过二进制指数后退算法计算后退延时， 关于这个算法，以下论述中错误的是（）',
-        answer: '',
-        answerList: [],
-        answers: [
-          {
-            label: 1,
-            text: '备选项1',
-          },
-          {
-            label: 2,
-            text: '备选项2',
-          },
-        ],
-      },
+      listData: [
+        {
+          index: 1,
+          type: 'single',
+          selected: false,
+          text:
+            '以太网采用的CSMA/CD协议，当冲突发生时要通过二进制指数后退算法计算后退延时， 关于这个算法，以下论述中错误的是（）',
+          answer: '',
+          answerList: [],
+          answers: [
+            {
+              label: 1,
+              text: '备选项1',
+            },
+            {
+              label: 2,
+              text: '备选项2',
+            },
+          ],
+        },
+        {
+          index: 2,
+          type: 'single',
+          selected: false,
+          text: '1000BASE-T标准支持的传输介质是（）',
+          answer: '',
+          answerList: [],
+          answers: [
+            {
+              label: 1,
+              text: '双绞线',
+            },
+            {
+              label: 2,
+              text: '同轴电缆',
+            },
+          ],
+        },
+        {
+          index: 3,
+          type: 'multiple',
+          selected: false,
+          text:
+            '在TCP/IP协议中，序号小于（ ）的端口称为熟知端口(well-known port)。',
+          answer: '',
+          answerList: [],
+          answers: [
+            {
+              label: 1,
+              text: '1024',
+            },
+            {
+              label: 2,
+              text: '64',
+            },
+          ],
+        },
+        {
+          index: 4,
+          type: 'multiple',
+          selected: false,
+          text: 'DHCP通常可以为客户端自动配置哪些网络参数（）',
+          answer: '',
+          answerList: [],
+          answers: [
+            {
+              label: 1,
+              text: 'IP',
+            },
+            {
+              label: 2,
+              text: 'DNS',
+            },
+            {
+              label: 3,
+              text: '网关',
+            },
+            {
+              label: 4,
+              text: '掩码',
+            },
+          ],
+        },
+      ],
 
       active: 1,
-      singleData: [
-        {
-          id: 1,
-          selected: false,
-        },
-        {
-          id: 2,
-          selected: false,
-        },
-        {
-          id: 3,
-          selected: false,
-        },
-      ],
-
-      multipleData: [
-        {
-          id: 4,
-          selected: false,
-        },
-        {
-          id: 5,
-          selected: false,
-        },
-        {
-          id: 6,
-          selected: false,
-        },
-      ],
+      singleData: [],
+      multipleData: [],
     }
   },
 
   created() {
     this.id = this.$route.query.id
+    this.startTimeout()
+    this.getHistory()
+    this.splitData()
   },
 
   computed: {
@@ -181,28 +235,86 @@ export default {
     },
   },
 
-  methods: {
-    getData() {
-      //TODO 请求后台数据
-      this.topic.index = this.active
-    },
-
-    onChoice(i, type = '单选') {
-      this.type = type
-      this.active = i
+  watch: {
+    active(val) {
       this.getData()
     },
 
-    onComplete() {},
+    listData: {
+      deep: true,
+      handler(val) {
+        sessionStorage.setItem('answers', JSON.stringify(val))
+      },
+    },
+  },
+
+  methods: {
+    startTimeout() {
+      // let time = 3 * 1000
+      let time = 1 * 60 * 60 * 1000
+      let timer = window.setInterval(() => {
+        if (time <= 0) {
+          window.clearInterval(timer)
+          this.onComplete()
+        } else {
+          time -= 1000
+          let d = moment.duration(time)
+          this.time = `${d.hours()}:${d.minutes()}:${d.seconds()}`
+        }
+      }, 1000)
+
+      this.$once('hook:beforeDestroy', () => {
+        window.clearInterval(timer)
+      })
+    },
+
+    getHistory() {
+      let answers = sessionStorage.getItem('answers')
+      if (answers) {
+        this.listData = JSON.parse(answers)
+      }
+    },
+
+    splitData() {
+      this.singleData = this.listData.filter((v) => v.type === 'single')
+      this.multipleData = this.listData.filter((v) => v.type === 'multiple')
+    },
+
+    getData() {
+      if (this.active <= this.singleData.length) {
+        this.type = '单选'
+      } else {
+        this.type = '多选'
+      }
+    },
+
+    onChoice(i) {
+      this.active = i
+    },
 
     onPre() {
       this.active = this.active - 1
-      this.getData()
     },
 
     onNext() {
       this.active = this.active + 1
-      this.getData()
+    },
+
+    changeRadio() {
+      this.listData[this.active - 1].selected = true
+    },
+
+    changeCheckbox(val) {
+      if (val.length) {
+        this.listData[this.active - 1].selected = true
+      } else {
+        this.listData[this.active - 1].selected = false
+      }
+    },
+
+    onComplete() {
+      console.log('提交')
+      this.showDialogEnd = true
     },
   },
 }
