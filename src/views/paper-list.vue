@@ -9,22 +9,22 @@
           @click="onJump(item.id)"
         >
           <el-card shadow="hover">
-            <h3>{{item.title}}</h3>
-            <p class="row">{{item.subTitle}}</p>
+            <h3>{{ item.title }}</h3>
+            <p class="row">{{ item.subTitle }}</p>
             <div class="row row2">
               <div class="row-item">
                 <i class="el-icon-time"></i>
-                <span>{{item.date}}</span>
+                <span>{{ item.date }}</span>
               </div>
 
               <div class="row-item">
                 <i class="el-icon-alarm-clock"></i>
-                <span>限时{{item.time}}分钟</span>
+                <span>限时{{ item.time }}分钟</span>
               </div>
 
               <div class="row-item">
                 <i class="el-icon-tickets"></i>
-                <span>满分{{item.fullMark}}分</span>
+                <span>满分{{ item.fullMark }}分</span>
               </div>
             </div>
           </el-card>
@@ -35,44 +35,57 @@
 </template>
 
 <script>
+import User from "@/api/user";
+
 export default {
   data() {
     return {
       listData: [
         {
           id: 1,
-          title: '数据库理论',
-          subTitle: '数据库理论-2019年上学期期末考试',
-          date: '2019-03-07',
+          title: "数据库理论",
+          subTitle: "数据库理论-2019年上学期期末考试",
+          date: "2019-03-07",
           time: 90,
           fullMark: 100,
         },
         {
           id: 2,
-          title: '数据库理论',
-          subTitle: '数据库理论-2019年上学期期末考试',
-          date: '2019-03-07',
+          title: "数据库理论",
+          subTitle: "数据库理论-2019年上学期期末考试",
+          date: "2019-03-07",
           time: 90,
           fullMark: 100,
         },
         {
           id: 3,
-          title: '数据库理论',
-          subTitle: '数据库理论-2019年上学期期末考试',
-          date: '2019-03-07',
+          title: "数据库理论",
+          subTitle: "数据库理论-2019年上学期期末考试",
+          date: "2019-03-07",
           time: 90,
           fullMark: 100,
         },
       ],
-    }
+    };
+  },
+
+  created() {
+    this.getData();
   },
 
   methods: {
     onJump(id) {
-      this.$router.push({ path: '/answer', query: { id } })
+      this.$router.push({ path: "/answer", query: { id } });
+    },
+
+    async getData() {
+      try {
+        const { data } = await User.queryByName({ name: "admin" });
+        console.log(data);
+      } catch (error) {}
     },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>

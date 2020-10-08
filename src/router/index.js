@@ -29,10 +29,24 @@ const routes = [
     name: 'Answer',
     component: () => import(/* webpackChunkName: "answer" */ '@/views/answer.vue')
   },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import(/* webpackChunkName: "login" */ '@/views/login.vue')
+  },
 ]
 
 const router = new VueRouter({
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  let token = localStorage.getItem("token");
+  if (!token && to.path !== '/login') {
+    next(`/login`)
+  } else {
+    next()
+  }
 })
 
 export default router

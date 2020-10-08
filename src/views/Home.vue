@@ -6,10 +6,10 @@
         class="el-menu-demo"
         mode="horizontal"
         @select="handleSelect"
-        router
       >
-        <el-menu-item index="paper-list">我的试卷</el-menu-item>
-        <el-menu-item index="my-score">我的分数</el-menu-item>
+        <el-menu-item index="1">我的试卷</el-menu-item>
+        <el-menu-item index="2">我的分数</el-menu-item>
+        <el-menu-item index="3">退出登录</el-menu-item>
       </el-menu>
     </header>
 
@@ -20,19 +20,31 @@
 </template>
 
 <script>
+import User from "@/api/user";
+
 export default {
-  name: 'Home',
+  name: "Home",
   data() {
     return {
-      activeIndex: 'paper-list',
-    }
+      activeIndex: "1",
+    };
   },
   methods: {
     handleSelect(key, keyPath) {
-      // console.log(key, keyPath)
+      switch (key) {
+        case "1":
+          this.$router.push("paper-list");
+          break;
+        case "2":
+          this.$router.push("my-score");
+          break;
+        case "3":
+          User.logout();
+          break;
+      }
     },
   },
-}
+};
 </script>
 <style lang="scss" scoped>
 @mixin main-layout {
