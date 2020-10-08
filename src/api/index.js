@@ -19,7 +19,7 @@ instance.interceptors.response.use(
         // token过期或者token无效
         const { code } = response.data
         switch (code) {
-            case '10002':
+            case '403':
                 localStorage.clear()
                 router._Router.replace('/login')
                 break;
