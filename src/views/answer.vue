@@ -1,78 +1,92 @@
 <template>
-  <div class="answer-wrapper">
+  <div class="answer-wrapper" v-loading="loading">
     <div class="header">
-      <h2 class="title">期末考试-数据库理论</h2>
+      <h2 class="title">{{ name }}</h2>
     </div>
 
     <div class="main">
       <!-- 左侧题目导航 -->
-      <aside class="aside">
-        <el-card>
-          <div slot="header">单选题</div>
-
-          <ul class="card-wrapper">
-            <li
-              v-for="(item, index) in singleData"
-              :key="index"
-              class="card-item"
-              :class="{selected:item.selected,active:active === index+1}"
-              @click="onChoice(index+1)"
-            >{{index+1}}</li>
-          </ul>
-        </el-card>
-
-        <el-card style="margin-top:20px;">
-          <div slot="header">多选题</div>
-
-          <ul class="card-wrapper">
-            <li
-              v-for="(item, index) in multipleData"
-              :key="index"
-              class="card-item"
-              :class="{selected:item.selected,active:active === singleData.length+index+1}"
-              @click="onChoice(singleData.length+index+1)"
-            >{{singleData.length+index+1}}</li>
-          </ul>
-        </el-card>
-
-        <el-button
-          type="primary"
-          style="width:100%;margin-top:20px;"
-          @click="dialogVisible = true"
-        >结束考试</el-button>
-      </aside>
+      <sticky>
+        <aside class="aside">
+          <el-card>
+            <div slot="header">选择题</div>
+            <ul class="card-wrapper">
+              <li
+                v-for="(item, index) in listData"
+                :key="index"
+                class="card-item"
+                :class="{
+                  selected: item.selected,
+                  active: active === index,
+                }"
+                @click="onChoice(index)"
+              >
+                {{ index + 1 }}
+              </li>
+            </ul>
+          </el-card>
+          <el-button
+            type="primary"
+            style="width:100%;margin-top:20px;"
+            @click="dialogVisible = true"
+          >
+            结束考试
+          </el-button>
+        </aside>
+      </sticky>
 
       <!-- 右侧答题区域 -->
       <section class="content">
         <div class="content-header">
           <span>请选择正确的选项</span>
-          <span>倒计时：{{time}}</span>
+          <span>倒计时：{{ time }}</span>
         </div>
 
         <div class="content-body">
           <div>
-            <span style="margin-right:5px;">{{listData[active-1].index}}.</span>
-            <span>{{listData[active-1].text}}</span>
+            <span style="margin-right:5px;">
+              {{ listData[active].index }}.
+            </span>
+            <span>{{ listData[active].text }}</span>
           </div>
 
-          <div style="margin-top:20px;margin-left:20px;" v-show="type==='单选'">
-            <el-radio-group v-model="listData[active-1].answer" @change="changeRadio">
+          <div
+            style="margin-top:20px;margin-left:20px;"
+            v-show="listData[active].type === 1"
+          >
+            <el-radio-group
+              v-model="listData[active].answer"
+              @change="changeRadio"
+            >
               <el-radio
-                v-for="(item, index) in listData[active-1].answers"
+                v-for="(item, index) in listData[active].answers"
                 :key="index"
-                :label="item.label"
-              >{{item.text}}</el-radio>
+                :label="item.id"
+              >
+                {{ item.mc }}
+              </el-radio>
             </el-radio-group>
           </div>
 
-          <div style="margin-top:20px;margin-left:20px;" v-show="type==='多选'">
-            <el-checkbox-group v-model="listData[active-1].answerList" @change="changeCheckbox">
+          <div
+            style="margin-top:20px;margin-left:20px;"
+            v-show="listData[active].type === 2"
+          >
+            <el-checkbox-group
+              v-model="listData[active].answerList"
+              @change="changeCheckbox"
+            >
               <el-checkbox
-                v-for="(item, index) in listData[active-1].answers"
+                v-for="(item, index) in listData[active].answers"
                 :key="index"
                 :label="item.label"
-              >{{item.text}}</el-checkbox>
+                >{{ item.text }}</el-checkbox
+              >
             </el-checkbox-group>
+          </div>
+
+          <div class="img-wrapper" v-show="listData[active].img">
+            <img class="img" :src="listData[active].img" alt="图片" />
           </div>
         </div>
 
@@ -83,7 +97,8 @@
             style="margin-right:20px;"
             @click="onPre"
             :disabled="minDisabled"
-          >上一题</el-button>
+            >上一题</el-button
+          >
           <el-button type="primary" @click="onNext" :disabled="maxDisabled">
             下一题
             <i class="el-icon-arrow-right"></i>
@@ -97,233 +112,281 @@
       <span>确定提交试卷吗？</span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">再检查一下</el-button>
-        <el-button type="primary" @click="onComplete">立即交卷</el-button>
+        <el-button :loading="submitLoading" type="primary" @click="onComplete">
+          立即交卷
+        </el-button>
       </span>
     </el-dialog>
 
-    <el-dialog title="提示" :visible.sync="showDialogEnd" width="30%">
+    <el-dialog
+      title="提示"
+      :visible.sync="showDialogEnd"
+      width="30%"
+      @close="onEndConfirm"
+    >
       <i class="el-icon-warning"></i>
       <span>考试结束，试卷已提交！</span>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="showDialogEnd = false">确 定</el-button>
+        <el-button @click="onEndConfirm">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <el-dialog title="提示" :visible.sync="showLeave" width="30%">
+      <i class="el-icon-warning"></i>
+      <span>离开此页面数据不会保存，确定离开吗？</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showLeave = false">取 消</el-button>
+        <el-button type="danger" @click="onLeave">确 定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import moment from 'moment'
+import moment from "moment";
+import KaoShi from "@/api/kaoshi";
 
 export default {
   data() {
     return {
       id: 0,
+      userId: 0,
+      loading: false,
+      time: "",
+      duration: 0,
+      timer: null,
+      targetPath: "",
+      active: 0,
+      type: "单选",
+      isHistory: false,
       dialogVisible: false,
       showDialogEnd: false,
-      time: '',
-      type: '单选',
+      showLeave: false,
+      isLeave: false,
+      submitLoading: false,
+      name: "",
 
       listData: [
         {
-          index: 1,
-          type: 'single',
-          selected: false,
-          text:
-            '以太网采用的CSMA/CD协议，当冲突发生时要通过二进制指数后退算法计算后退延时， 关于这个算法，以下论述中错误的是（）',
-          answer: '',
-          answerList: [],
-          answers: [
-            {
-              label: 1,
-              text: '备选项1',
-            },
-            {
-              label: 2,
-              text: '备选项2',
-            },
-          ],
-        },
-        {
-          index: 2,
-          type: 'single',
-          selected: false,
-          text: '1000BASE-T标准支持的传输介质是（）',
-          answer: '',
-          answerList: [],
-          answers: [
-            {
-              label: 1,
-              text: '双绞线',
-            },
-            {
-              label: 2,
-              text: '同轴电缆',
-            },
-          ],
-        },
-        {
-          index: 3,
-          type: 'multiple',
-          selected: false,
-          text:
-            '在TCP/IP协议中，序号小于（ ）的端口称为熟知端口(well-known port)。',
-          answer: '',
-          answerList: [],
-          answers: [
-            {
-              label: 1,
-              text: '1024',
-            },
-            {
-              label: 2,
-              text: '64',
-            },
-          ],
-        },
-        {
-          index: 4,
-          type: 'multiple',
-          selected: false,
-          text: 'DHCP通常可以为客户端自动配置哪些网络参数（）',
-          answer: '',
-          answerList: [],
-          answers: [
-            {
-              label: 1,
-              text: 'IP',
-            },
-            {
-              label: 2,
-              text: 'DNS',
-            },
-            {
-              label: 3,
-              text: '网关',
-            },
-            {
-              label: 4,
-              text: '掩码',
-            },
-          ],
+          // index: 1,
+          // type: 1,
+          // selected: false,
+          // text: "",
+          // answer: "",
+          // answerList: [],
+          // answers: [
+          //   {
+          //     label: 1,
+          //     text: "",
+          //   },
+          //   {
+          //     label: 2,
+          //     text: "",
+          //   },
+          // ],
+          // img: "",
         },
       ],
+    };
+  },
 
-      active: 1,
-      singleData: [],
-      multipleData: [],
+  beforeRouteLeave(to, from, next) {
+    if (this.isLeave) {
+      this.showLeave = false;
+      next();
+    } else {
+      this.targetPath = to.path; // 提示框点击确认后跳转的 路由
+      this.showLeave = true;
+      next(false);
     }
   },
 
   created() {
-    this.id = this.$route.query.id
-    this.startTimeout()
-    this.getHistory()
-    this.splitData()
+    this.id = this.$route.query.id;
+    let user = JSON.parse(localStorage.getItem("user"));
+    this.userId = user.id;
+    this.setTimeout();
+    this.isHistory = this.getHistory();
+    this.getData();
   },
 
   computed: {
     maxLength() {
-      return this.singleData.length + this.multipleData.length
+      return this.listData.length;
     },
 
     minDisabled() {
-      return this.active === 1
+      return this.active === 0;
     },
 
     maxDisabled() {
-      return this.active === this.maxLength
+      return this.active === this.maxLength - 1;
     },
   },
 
   watch: {
-    active(val) {
-      this.getData()
-    },
-
     listData: {
       deep: true,
       handler(val) {
-        sessionStorage.setItem('answers', JSON.stringify(val))
+        sessionStorage.setItem("answers", JSON.stringify(val));
       },
     },
   },
 
   methods: {
-    startTimeout() {
-      // let time = 3 * 1000
-      let time = 1 * 60 * 60 * 1000
-      let timer = window.setInterval(() => {
-        if (time <= 0) {
-          window.clearInterval(timer)
-          this.onComplete()
+    async getData() {
+      try {
+        this.loading = true;
+        const { data } = await KaoShi.queryById({
+          sjId: this.id,
+          userId: this.userId,
+        });
+        console.log(data);
+        this.name = data.sjMc;
+        let now = moment();
+        // let start = "2020-10-11 18:00:00";
+        let start = moment(data.kssj);
+        let time = now.diff(start, "minute");
+        let duration = data.kssc;
+        let d = duration - time;
+        if (d <= 0) {
+          this.showDialogEnd = true;
         } else {
-          time -= 1000
-          let d = moment.duration(time)
-          this.time = `${d.hours()}:${d.minutes()}:${d.seconds()}`
+          window.clearInterval(this.timer);
+          this.duration = d * 60 * 1000;
+          this.setTimeout();
         }
-      }, 1000)
 
-      this.$once('hook:beforeDestroy', () => {
-        window.clearInterval(timer)
-      })
-    },
-
-    getHistory() {
-      let answers = sessionStorage.getItem('answers')
-      if (answers) {
-        this.listData = JSON.parse(answers)
+        if (this.isHistory === false) {
+          let arr = [];
+          data.sjXzt.forEach((item) => {
+            let obj = {
+              index: item.index,
+              type: item.type,
+              selected: false,
+              text: item.tmmc,
+              answer: "",
+              answerList: [],
+              answers: item.options,
+              img: "",
+            };
+            if (item.img) {
+              obj.img = "http://glsite.cn:1002" + item.img;
+            }
+            arr.push(obj);
+          });
+          this.listData = arr;
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.loading = false;
       }
     },
 
-    splitData() {
-      this.singleData = this.listData.filter((v) => v.type === 'single')
-      this.multipleData = this.listData.filter((v) => v.type === 'multiple')
+    setTimeout() {
+      this.timer = window.setInterval(() => {
+        if (this.duration <= 0) {
+          window.clearInterval(this.timer);
+          this.showDialogEnd = true;
+        } else {
+          this.duration -= 1000;
+          let d = moment.duration(this.duration);
+          this.time = `${d.hours() > 9 ? d.hours() : "0" + d.hours()}:${
+            d.minutes() > 9 ? d.minutes() : "0" + d.minutes()
+          }:${d.seconds() > 9 ? d.seconds() : "0" + d.seconds()}`;
+        }
+      }, 1000);
+
+      this.$once("hook:beforeDestroy", () => {
+        window.clearInterval(this.timer);
+      });
     },
 
-    getData() {
-      if (this.active <= this.singleData.length) {
-        this.type = '单选'
+    getHistory() {
+      let answers = sessionStorage.getItem("answers");
+      if (answers) {
+        this.listData = JSON.parse(answers);
+        return true;
       } else {
-        this.type = '多选'
+        return false;
       }
     },
 
     onChoice(i) {
-      this.active = i
+      this.active = i;
     },
 
     onPre() {
-      this.active = this.active - 1
+      this.active = this.active - 1;
     },
 
     onNext() {
-      this.active = this.active + 1
+      this.active = this.active + 1;
     },
 
     changeRadio() {
-      this.listData[this.active - 1].selected = true
+      this.listData[this.active].selected = true;
     },
 
     changeCheckbox(val) {
       if (val.length) {
-        this.listData[this.active - 1].selected = true
+        this.listData[this.active].selected = true;
       } else {
-        this.listData[this.active - 1].selected = false
+        this.listData[this.active].selected = false;
       }
     },
 
-    onComplete() {
-      console.log('提交')
-      this.showDialogEnd = true
+    async onComplete() {
+      this.submitLoading = true;
+      let data = [];
+      this.listData.forEach((item) => {
+        let obj = { xztId: item.id, ops: [] };
+        if (item.type === 1) {
+          if (item.answer) {
+            obj.ops.push(item.answer);
+          }
+        } else {
+          item.answerList.forEach((aTtem) => {
+            if (aTtem.label) {
+              obj.ops.push(aTtem.label);
+            }
+          });
+        }
+        data.push(obj);
+      });
+      try {
+        await KaoShi.submit({
+          sjId: Number(this.id),
+          userId: this.userId,
+          dtkXzt: data,
+        });
+        this.onLeave();
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.submitLoading = false;
+      }
+    },
+
+    onLeave() {
+      this.isLeave = true;
+      sessionStorage.clear();
+      this.$router.replace(this.targetPath || "/");
+    },
+
+    onEndConfirm() {
+      this.showDialogEnd = false;
+      this.onLeave();
     },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>
 .answer-wrapper {
   background: #eee;
-  height: 100%;
+  min-height: 100%;
 }
 
 .header {
@@ -342,11 +405,14 @@ export default {
 
 .main {
   display: flex;
+  position: relative;
 }
 
 .aside {
+  position: absolute;
+  top: 10px;
+  left: 10px;
   width: 260px;
-  margin: 10px 10px 0;
 
   .card-wrapper {
     display: grid;
@@ -385,10 +451,10 @@ export default {
 }
 
 .content {
+  width: 100%;
+  margin-left: 280px;
   margin-top: 10px;
   margin-right: 10px;
-  flex: 1;
-  width: 0;
 
   .content-header {
     height: 50px;
@@ -400,19 +466,26 @@ export default {
   }
 
   .content-body {
-    height: 470px;
+    min-height: 470px;
     margin-top: 10px;
     background: #fff;
     padding: 20px 20px 0 20px;
   }
 
   .content-footer {
-    margin-top: 10px;
+    margin: 10px 0;
     background: #fff;
     height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  .img-wrapper {
+    .img {
+      width: 600px;
+      height: auto;
+    }
   }
 }
 

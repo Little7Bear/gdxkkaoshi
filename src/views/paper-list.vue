@@ -1,88 +1,133 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-card shadow="never">
       <ul class="list-wrapper">
         <li
           class="list-item-container"
           v-for="(item, index) in listData"
           :key="index"
-          @click="onJump(item.id)"
+          @click="onJump(item)"
         >
           <el-card shadow="hover">
-            <h3>{{ item.title }}</h3>
-            <p class="row">{{ item.subTitle }}</p>
+            <h3>{{ item.mc }}</h3>
+            <p class="row">
+              {{ item.gksj | longDate }}&nbsp;至&nbsp;{{ item.jssj | longDate }}
+            </p>
             <div class="row row2">
               <div class="row-item">
-                <i class="el-icon-time"></i>
-                <span>{{ item.date }}</span>
-              </div>
-
-              <div class="row-item">
                 <i class="el-icon-alarm-clock"></i>
-                <span>限时{{ item.time }}分钟</span>
+                <span>限时{{ item.kssc }}分钟</span>
               </div>
 
               <div class="row-item">
                 <i class="el-icon-tickets"></i>
-                <span>满分{{ item.fullMark }}分</span>
+                <span>满分{{ item.zf }}分</span>
               </div>
             </div>
           </el-card>
         </li>
       </ul>
     </el-card>
+
+    <el-dialog title="提示" :visible.sync="showStart" width="30%">
+      <i class="el-icon-warning"></i>
+      <span>确定开始考试吗？</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showStart = false">取 消</el-button>
+        <el-button type="primary" @click="onStart()">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import User from "@/api/user";
+import ShiJuan from "@/api/shijuan";
+import moment from "moment";
 
 export default {
+  filters: {
+    longDate(value) {
+      if (!value) return "";
+      return moment(value).format("YYYY-MM-DD HH:ss:mm");
+    },
+  },
+
   data() {
     return {
+      loading: false,
+      showStart: false,
+      userId: 0,
+      currentPaper: null,
       listData: [
-        {
-          id: 1,
-          title: "数据库理论",
-          subTitle: "数据库理论-2019年上学期期末考试",
-          date: "2019-03-07",
-          time: 90,
-          fullMark: 100,
-        },
-        {
-          id: 2,
-          title: "数据库理论",
-          subTitle: "数据库理论-2019年上学期期末考试",
-          date: "2019-03-07",
-          time: 90,
-          fullMark: 100,
-        },
-        {
-          id: 3,
-          title: "数据库理论",
-          subTitle: "数据库理论-2019年上学期期末考试",
-          date: "2019-03-07",
-          time: 90,
-          fullMark: 100,
-        },
+        // {
+        //   id: 1,
+        //   title: "数据库理论",
+        //   subTitle: "数据库理论-2019年上学期期末考试",
+        //   date: "2019-03-07",
+        //   time: 90,
+        //   fullMark: 100,
+        // },
+        // {
+        //   id: 2,
+        //   title: "数据库理论",
+        //   subTitle: "数据库理论-2019年上学期期末考试",
+        //   date: "2019-03-07",
+        //   time: 90,
+        //   fullMark: 100,
+        // },
+        // {
+        //   id: 3,
+        //   title: "数据库理论",
+        //   subTitle: "数据库理论-2019年上学期期末考试",
+        //   date: "2019-03-07",
+        //   time: 90,
+        //   fullMark: 100,
+        // },
       ],
     };
   },
 
   created() {
+    let user = JSON.parse(localStorage.getItem("user"));
+    this.userId = user.id;
     this.getData();
   },
 
   methods: {
-    onJump(id) {
-      this.$router.push({ path: "/answer", query: { id } });
+    onJump(item) {
+      let { gksj, jssj } = item;
+      let now = moment();
+      if (now <= moment(jssj) && now >= moment(gksj)) {
+        if (item.sfjs == 0) {
+          this.showStart = true;
+          this.currentPaper = item;
+        } else {
+          this.$message.warning("考试已结束");
+        }
+      } else {
+        this.$message.warning("当前时间不在考试时间范围内");
+      }
     },
 
     async getData() {
       try {
-        const { data } = await User.queryByName({ name: "admin" });
+        this.loading = true;
+        const { data } = await ShiJuan.queryByUserId({ userId: this.userId });
         console.log(data);
-      } catch (error) {}
+        this.listData = data;
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    onStart() {
+      this.showStart = false;
+      this.$router.push({
+        path: "/answer",
+        query: { id: this.currentPaper.id },
+      });
     },
   },
 };

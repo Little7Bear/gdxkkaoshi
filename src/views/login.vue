@@ -69,6 +69,15 @@ export default {
             this.loading = true;
             const { data } = await User.login(this.form);
             localStorage.setItem("token", data.token);
+            localStorage.setItem(
+              "user",
+              JSON.stringify({
+                id: data.id,
+                name: data.userName,
+                mc: data.mc,
+                role: data.role,
+              })
+            );
             this.$router.replace("/");
           } catch (error) {
             console.log(error);

@@ -8,8 +8,8 @@
         @select="handleSelect"
       >
         <el-menu-item index="1">我的试卷</el-menu-item>
-        <el-menu-item index="2">我的分数</el-menu-item>
-        <el-menu-item index="3">退出登录</el-menu-item>
+        <el-menu-item index="2">退出登录</el-menu-item>
+        <span class="user-name">{{ username }}</span>
       </el-menu>
     </header>
 
@@ -24,11 +24,18 @@ import User from "@/api/user";
 
 export default {
   name: "Home",
+
   data() {
     return {
       activeIndex: "1",
+      username: "",
     };
   },
+
+  created() {
+    this.username = JSON.parse(localStorage.getItem("user")).name;
+  },
+
   methods: {
     handleSelect(key, keyPath) {
       switch (key) {
@@ -61,5 +68,11 @@ export default {
 
 /deep/ .el-menu {
   @include main-layout;
+}
+
+.user-name {
+  position: absolute;
+  right: 0;
+  top: 30px;
 }
 </style>

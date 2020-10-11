@@ -21,6 +21,7 @@ instance.interceptors.response.use(
         switch (code) {
             case '403':
                 localStorage.clear()
+                sessionStorage.clear()
                 router._Router.replace('/login')
                 break;
         }

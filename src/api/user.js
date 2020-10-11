@@ -22,6 +22,7 @@ export default class User {
 
     static logout() {
         localStorage.clear()
+        sessionStorage.clear()
         router.replace('/login')
     }
 }
