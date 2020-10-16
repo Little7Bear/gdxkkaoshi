@@ -319,8 +319,8 @@ export default {
           }
         } else {
           item.answerList.forEach((aTtem) => {
-            if (aTtem.label) {
-              obj.ops.push(aTtem.label)
+            if (aTtem) {
+              obj.ops.push(aTtem)
             }
           })
         }
