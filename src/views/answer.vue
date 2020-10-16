@@ -6,34 +6,30 @@
 
     <div class="main">
       <!-- 左侧题目导航 -->
-      <sticky>
-        <aside class="aside">
-          <el-card>
-            <div slot="header">选择题</div>
-            <ul class="card-wrapper">
-              <li
-                v-for="(item, index) in listData"
-                :key="index"
-                class="card-item"
-                :class="{
+      <!-- <sticky> -->
+      <aside class="aside">
+        <el-card>
+          <div slot="header">选择题</div>
+          <ul class="card-wrapper">
+            <li
+              v-for="(item, index) in listData"
+              :key="index"
+              class="card-item"
+              :class="{
                   selected: item.selected,
                   active: active === index,
                 }"
-                @click="onChoice(index)"
-              >
-                {{ index + 1 }}
-              </li>
-            </ul>
-          </el-card>
-          <el-button
-            type="primary"
-            style="width:100%;margin-top:20px;"
-            @click="dialogVisible = true"
-          >
-            结束考试
-          </el-button>
-        </aside>
-      </sticky>
+              @click="onChoice(index)"
+            >{{ index + 1 }}</li>
+          </ul>
+        </el-card>
+        <el-button
+          type="primary"
+          style="width:100%;margin-top:20px;"
+          @click="dialogVisible = true"
+        >结束考试</el-button>
+      </aside>
+      <!-- </sticky> -->
 
       <!-- 右侧答题区域 -->
       <section class="content">
@@ -44,44 +40,27 @@
 
         <div class="content-body">
           <div>
-            <span style="margin-right:5px;">
-              {{ listData[active].index }}.
-            </span>
+            <span style="margin-right:5px;">{{ listData[active].index }}.</span>
             <span>{{ listData[active].text }}</span>
           </div>
 
-          <div
-            style="margin-top:20px;margin-left:20px;"
-            v-show="listData[active].type === 1"
-          >
-            <el-radio-group
-              v-model="listData[active].answer"
-              @change="changeRadio"
-            >
+          <div style="margin-top:20px;margin-left:20px;" v-show="listData[active].type === 1">
+            <el-radio-group v-model="listData[active].answer" @change="changeRadio">
               <el-radio
                 v-for="(item, index) in listData[active].answers"
                 :key="index"
                 :label="item.id"
-              >
-                {{ item.mc }}
-              </el-radio>
+              >{{ item.mc }}</el-radio>
             </el-radio-group>
           </div>
 
-          <div
-            style="margin-top:20px;margin-left:20px;"
-            v-show="listData[active].type === 2"
-          >
-            <el-checkbox-group
-              v-model="listData[active].answerList"
-              @change="changeCheckbox"
-            >
+          <div style="margin-top:20px;margin-left:20px;" v-show="listData[active].type === 2">
+            <el-checkbox-group v-model="listData[active].answerList" @change="changeCheckbox">
               <el-checkbox
                 v-for="(item, index) in listData[active].answers"
                 :key="index"
-                :label="item.label"
-                >{{ item.text }}</el-checkbox
-              >
+                :label="item.id"
+              >{{ item.mc }}</el-checkbox>
             </el-checkbox-group>
           </div>
 
@@ -97,8 +76,7 @@
             style="margin-right:20px;"
             @click="onPre"
             :disabled="minDisabled"
-            >上一题</el-button
-          >
+          >上一题</el-button>
           <el-button type="primary" @click="onNext" :disabled="maxDisabled">
             下一题
             <i class="el-icon-arrow-right"></i>
@@ -112,18 +90,11 @@
       <span>确定提交试卷吗？</span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">再检查一下</el-button>
-        <el-button :loading="submitLoading" type="primary" @click="onComplete">
-          立即交卷
-        </el-button>
+        <el-button :loading="submitLoading" type="primary" @click="onComplete">立即交卷</el-button>
       </span>
     </el-dialog>
 
-    <el-dialog
-      title="提示"
-      :visible.sync="showDialogEnd"
-      width="30%"
-      @close="onEndConfirm"
-    >
+    <el-dialog title="提示" :visible.sync="showDialogEnd" width="30%" @close="onEndConfirm">
       <i class="el-icon-warning"></i>
       <span>考试结束，试卷已提交！</span>
       <span slot="footer" class="dialog-footer">
@@ -143,8 +114,8 @@
 </template>
 
 <script>
-import moment from "moment";
-import KaoShi from "@/api/kaoshi";
+import moment from 'moment'
+import KaoShi from '@/api/kaoshi'
 
 export default {
   data() {
@@ -152,19 +123,19 @@ export default {
       id: 0,
       userId: 0,
       loading: false,
-      time: "",
+      time: '',
       duration: 0,
       timer: null,
-      targetPath: "",
+      targetPath: '',
       active: 0,
-      type: "单选",
+      type: '单选',
       isHistory: false,
       dialogVisible: false,
       showDialogEnd: false,
       showLeave: false,
       isLeave: false,
       submitLoading: false,
-      name: "",
+      name: '',
 
       listData: [
         {
@@ -187,40 +158,40 @@ export default {
           // img: "",
         },
       ],
-    };
+    }
   },
 
   beforeRouteLeave(to, from, next) {
     if (this.isLeave) {
-      this.showLeave = false;
-      next();
+      this.showLeave = false
+      next()
     } else {
-      this.targetPath = to.path; // 提示框点击确认后跳转的 路由
-      this.showLeave = true;
-      next(false);
+      this.targetPath = to.path // 提示框点击确认后跳转的 路由
+      this.showLeave = true
+      next(false)
     }
   },
 
   created() {
-    this.id = this.$route.query.id;
-    let user = JSON.parse(localStorage.getItem("user"));
-    this.userId = user.id;
-    this.setTimeout();
-    this.isHistory = this.getHistory();
-    this.getData();
+    this.id = this.$route.query.id
+    let user = JSON.parse(localStorage.getItem('user'))
+    this.userId = user.id
+    this.setTimeout()
+    this.isHistory = this.getHistory()
+    this.getData()
   },
 
   computed: {
     maxLength() {
-      return this.listData.length;
+      return this.listData.length
     },
 
     minDisabled() {
-      return this.active === 0;
+      return this.active === 0
     },
 
     maxDisabled() {
-      return this.active === this.maxLength - 1;
+      return this.active === this.maxLength - 1
     },
   },
 
@@ -228,7 +199,7 @@ export default {
     listData: {
       deep: true,
       handler(val) {
-        sessionStorage.setItem("answers", JSON.stringify(val));
+        sessionStorage.setItem('answers', JSON.stringify(val))
       },
     },
   },
@@ -236,151 +207,151 @@ export default {
   methods: {
     async getData() {
       try {
-        this.loading = true;
+        this.loading = true
         const { data } = await KaoShi.queryById({
           sjId: this.id,
           userId: this.userId,
-        });
-        console.log(data);
-        this.name = data.sjMc;
-        let now = moment();
+        })
+        console.log(data)
+        this.name = data.sjMc
+        let now = moment()
         // let start = "2020-10-11 18:00:00";
-        let start = moment(data.kssj);
-        let time = now.diff(start, "minute");
-        let duration = data.kssc;
-        let d = duration - time;
+        let start = moment(data.kssj)
+        let time = now.diff(start, 'minute')
+        let duration = data.kssc
+        let d = duration - time
         if (d <= 0) {
-          this.showDialogEnd = true;
+          this.showDialogEnd = true
         } else {
-          window.clearInterval(this.timer);
-          this.duration = d * 60 * 1000;
-          this.setTimeout();
+          window.clearInterval(this.timer)
+          this.duration = d * 60 * 1000
+          this.setTimeout()
         }
 
         if (this.isHistory === false) {
-          let arr = [];
+          let arr = []
           data.sjXzt.forEach((item) => {
             let obj = {
               index: item.index,
               type: item.type,
               selected: false,
               text: item.tmmc,
-              answer: "",
+              answer: '',
               answerList: [],
               answers: item.options,
-              img: "",
-            };
-            if (item.img) {
-              obj.img = "http://glsite.cn:1002/" + item.img;
+              img: '',
             }
-            arr.push(obj);
-          });
-          this.listData = arr;
+            if (item.img) {
+              obj.img = 'http://glsite.cn:1002' + item.img
+            }
+            arr.push(obj)
+          })
+          this.listData = arr
         }
       } catch (error) {
-        console.log(error);
+        console.log(error)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     setTimeout() {
       this.timer = window.setInterval(() => {
         if (this.duration <= 0) {
-          window.clearInterval(this.timer);
-          this.showDialogEnd = true;
+          window.clearInterval(this.timer)
+          this.showDialogEnd = true
         } else {
-          this.duration -= 1000;
-          let d = moment.duration(this.duration);
-          this.time = `${d.hours() > 9 ? d.hours() : "0" + d.hours()}:${
-            d.minutes() > 9 ? d.minutes() : "0" + d.minutes()
-          }:${d.seconds() > 9 ? d.seconds() : "0" + d.seconds()}`;
+          this.duration -= 1000
+          let d = moment.duration(this.duration)
+          this.time = `${d.hours() > 9 ? d.hours() : '0' + d.hours()}:${
+            d.minutes() > 9 ? d.minutes() : '0' + d.minutes()
+          }:${d.seconds() > 9 ? d.seconds() : '0' + d.seconds()}`
         }
-      }, 1000);
+      }, 1000)
 
-      this.$once("hook:beforeDestroy", () => {
-        window.clearInterval(this.timer);
-      });
+      this.$once('hook:beforeDestroy', () => {
+        window.clearInterval(this.timer)
+      })
     },
 
     getHistory() {
-      let answers = sessionStorage.getItem("answers");
+      let answers = sessionStorage.getItem('answers')
       if (answers) {
-        this.listData = JSON.parse(answers);
-        return true;
+        this.listData = JSON.parse(answers)
+        return true
       } else {
-        return false;
+        return false
       }
     },
 
     onChoice(i) {
-      this.active = i;
+      this.active = i
     },
 
     onPre() {
-      this.active = this.active - 1;
+      this.active = this.active - 1
     },
 
     onNext() {
-      this.active = this.active + 1;
+      this.active = this.active + 1
     },
 
     changeRadio() {
-      this.listData[this.active].selected = true;
+      this.listData[this.active].selected = true
     },
 
     changeCheckbox(val) {
       if (val.length) {
-        this.listData[this.active].selected = true;
+        this.listData[this.active].selected = true
       } else {
-        this.listData[this.active].selected = false;
+        this.listData[this.active].selected = false
       }
     },
 
     async onComplete() {
-      this.submitLoading = true;
-      let data = [];
+      this.submitLoading = true
+      let data = []
       this.listData.forEach((item) => {
-        let obj = { xztId: item.id, ops: [] };
+        let obj = { xztId: item.id, ops: [] }
         if (item.type === 1) {
           if (item.answer) {
-            obj.ops.push(item.answer);
+            obj.ops.push(item.answer)
           }
         } else {
           item.answerList.forEach((aTtem) => {
-            if (aTtem.label) {
-              obj.ops.push(aTtem.label);
+            if (aTtem) {
+              obj.ops.push(aTtem)
             }
-          });
+          })
         }
-        data.push(obj);
-      });
+        data.push(obj)
+      })
       try {
         await KaoShi.submit({
           sjId: Number(this.id),
           userId: this.userId,
           dtkXzt: data,
-        });
-        this.onLeave();
+        })
+        this.onLeave()
       } catch (error) {
-        console.log(error);
+        console.log(error)
       } finally {
-        this.submitLoading = false;
+        this.submitLoading = false
       }
     },
 
     onLeave() {
-      this.isLeave = true;
-      sessionStorage.clear();
-      this.$router.replace(this.targetPath || "/");
+      this.isLeave = true
+      sessionStorage.clear()
+      this.$router.replace(this.targetPath || '/')
     },
 
     onEndConfirm() {
-      this.showDialogEnd = false;
-      this.onLeave();
+      this.showDialogEnd = false
+      this.onLeave()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>
