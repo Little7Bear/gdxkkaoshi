@@ -242,7 +242,7 @@ export default {
               img: '',
             }
             if (item.img) {
-              obj.img = 'http://glsite.cn:1002' + item.img
+              obj.img = 'http://glsite.cn:1002/' + item.img
             }
             arr.push(obj)
           })
