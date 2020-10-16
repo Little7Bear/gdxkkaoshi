@@ -271,7 +271,7 @@ export default {
               img: "",
             };
             if (item.img) {
-              obj.img = "http://glsite.cn:1002" + item.img;
+              obj.img = "http://glsite.cn:1002/" + item.img;
             }
             arr.push(obj);
           });
@@ -412,11 +412,11 @@ export default {
   position: absolute;
   top: 10px;
   left: 10px;
-  width: 260px;
+  width: 350px;
 
   .card-wrapper {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     grid-gap: 10px 15px;
   }
 
@@ -452,7 +452,7 @@ export default {
 
 .content {
   width: 100%;
-  margin-left: 280px;
+  margin-left:370px;
   margin-top: 10px;
   margin-right: 10px;
 
@@ -469,7 +469,7 @@ export default {
     min-height: 470px;
     margin-top: 10px;
     background: #fff;
-    padding: 20px 20px 0 20px;
+    padding: 10px 10px 0 10px;
   }
 
   .content-footer {

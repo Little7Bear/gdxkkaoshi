@@ -18,7 +18,7 @@
                 <i class="el-icon-alarm-clock"></i>
                 <span>限时{{ item.kssc }}分钟</span>
               </div>
-
+              
               <div class="row-item">
                 <i class="el-icon-tickets"></i>
                 <span>满分{{ item.zf }}分</span>
@@ -27,6 +27,7 @@
           </el-card>
         </li>
       </ul>
+        <span v-if="!listData">无测评信息！</span>
     </el-card>
 
     <el-dialog title="提示" :visible.sync="showStart" width="30%">
@@ -58,32 +59,7 @@ export default {
       showStart: false,
       userId: 0,
       currentPaper: null,
-      listData: [
-        // {
-        //   id: 1,
-        //   title: "数据库理论",
-        //   subTitle: "数据库理论-2019年上学期期末考试",
-        //   date: "2019-03-07",
-        //   time: 90,
-        //   fullMark: 100,
-        // },
-        // {
-        //   id: 2,
-        //   title: "数据库理论",
-        //   subTitle: "数据库理论-2019年上学期期末考试",
-        //   date: "2019-03-07",
-        //   time: 90,
-        //   fullMark: 100,
-        // },
-        // {
-        //   id: 3,
-        //   title: "数据库理论",
-        //   subTitle: "数据库理论-2019年上学期期末考试",
-        //   date: "2019-03-07",
-        //   time: 90,
-        //   fullMark: 100,
-        // },
-      ],
+      listData: [],
     };
   },
 
@@ -158,3 +134,4 @@ export default {
   }
 }
 </style>
+

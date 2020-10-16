@@ -1,15 +1,18 @@
 <template>
-  <div class="app-wrapper">
-    <header class="header">
+  <div class="app-wrapper" style="color:#fff">
+    <header class="header" style="background: #2f4b69;">
       <el-menu
         :default-active="activeIndex"
         class="el-menu-demo"
         mode="horizontal"
         @select="handleSelect"
+        background-color="#2f4b69"
+        text-color="#fff"
+        active-text-color="#ffd04b"
       >
-        <el-menu-item index="1">我的试卷</el-menu-item>
-        <el-menu-item index="2">退出登录</el-menu-item>
-        <span class="user-name">{{ username }}</span>
+        <el-menu-item style="color:#fff" index="1">我的测评</el-menu-item>
+        <el-menu-item style="color:#fff" index="2">退出登录</el-menu-item>
+        <span class="user-name">用户名：{{ username }}</span>
       </el-menu>
     </header>
 
@@ -28,7 +31,7 @@ export default {
   data() {
     return {
       activeIndex: "1",
-      username: "",
+      username: ""
     };
   },
 
@@ -42,15 +45,15 @@ export default {
         case "1":
           this.$router.push("paper-list");
           break;
-        case "2":
+        case "3":
           this.$router.push("my-score");
           break;
-        case "3":
+        case "2":
           User.logout();
           break;
       }
-    },
-  },
+    }
+  }
 };
 </script>
 <style lang="scss" scoped>
@@ -72,7 +75,7 @@ export default {
 
 .user-name {
   position: absolute;
-  right: 0;
-  top: 30px;
+  right: 10px;
+  top: 20px;
 }
 </style>

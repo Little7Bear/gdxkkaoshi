@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="form">
-      <h2 class="title">考试系统登录</h2>
+      <h2 class="title">三友集团岗位测评登录</h2>
       <el-form ref="form" :model="form" :rules="rules">
         <el-form-item prop="userName">
           <el-input
@@ -103,8 +103,8 @@ export default {
 }
 
 .form {
-  width: 448px;
+  width: 308px;
   margin: 0 auto;
-  margin-top: 150px;
+  margin-top: 200px;
 }
 </style>
