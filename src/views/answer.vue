@@ -40,7 +40,7 @@
 
         <div class="content-body">
           <div>
-            <span style="margin-right:5px;">{{ listData[active].index }}.</span>
+            <span style="margin-right:5px;">{{ listData[active].index+1 }}.</span>
             <span>{{ listData[active].text }}</span>
           </div>
 
@@ -94,7 +94,14 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="提示" :visible.sync="showDialogEnd" width="30%" @close="onEndConfirm">
+    <el-dialog
+      title="提示"
+      :visible.sync="showDialogEnd"
+      width="30%"
+      @close="onEndConfirm"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
+    >
       <i class="el-icon-warning"></i>
       <span>考试结束，试卷已提交！</span>
       <span slot="footer" class="dialog-footer">
@@ -176,7 +183,6 @@ export default {
     this.id = this.$route.query.id
     let user = JSON.parse(localStorage.getItem('user'))
     this.userId = user.id
-    this.setTimeout()
     this.isHistory = this.getHistory()
     this.getData()
   },
@@ -212,26 +218,27 @@ export default {
           sjId: this.id,
           userId: this.userId,
         })
-        console.log(data)
+
         this.name = data.sjMc
+
+        //定时器
         let now = moment()
-        // let start = "2020-10-11 18:00:00";
-        let start = moment(data.kssj)
-        let time = now.diff(start, 'minute')
-        let duration = data.kssc
-        let d = duration - time
-        if (d <= 0) {
-          this.showDialogEnd = true
+        let endTime = moment(data.jssj)
+        let remainingTime = endTime.diff(now, 'millisecond')
+        if (remainingTime <= 0) {
+          //交卷
+          this.onComplete()
         } else {
-          window.clearInterval(this.timer)
-          this.duration = d * 60 * 1000
-          this.setTimeout()
+          //设定定时器
+          this.setTimeout(remainingTime)
         }
 
+        //转换数据
         if (this.isHistory === false) {
           let arr = []
           data.sjXzt.forEach((item) => {
             let obj = {
+              id: item.id,
               index: item.index,
               type: item.type,
               selected: false,
@@ -255,12 +262,19 @@ export default {
       }
     },
 
-    setTimeout() {
+    setTimeout(remainingTime) {
+      if (this.timer) {
+        window.clearInterval(this.timer)
+      }
+
+      this.duration = remainingTime
       this.timer = window.setInterval(() => {
         if (this.duration <= 0) {
+          //交卷
+          this.onComplete()
           window.clearInterval(this.timer)
-          this.showDialogEnd = true
         } else {
+          //更新时间
           this.duration -= 1000
           let d = moment.duration(this.duration)
           this.time = `${d.hours() > 9 ? d.hours() : '0' + d.hours()}:${
@@ -270,7 +284,9 @@ export default {
       }, 1000)
 
       this.$once('hook:beforeDestroy', () => {
-        window.clearInterval(this.timer)
+        if (this.timer) {
+          window.clearInterval(this.timer)
+        }
       })
     },
 
@@ -326,13 +342,14 @@ export default {
         }
         data.push(obj)
       })
+
       try {
         await KaoShi.submit({
           sjId: Number(this.id),
           userId: this.userId,
           dtkXzt: data,
         })
-        this.onLeave()
+        this.showDialogEnd = true
       } catch (error) {
         console.log(error)
       } finally {
@@ -423,7 +440,7 @@ export default {
 
 .content {
   width: 100%;
-  margin-left:370px;
+  margin-left: 370px;
   margin-top: 10px;
   margin-right: 10px;
 
